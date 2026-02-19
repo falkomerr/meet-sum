@@ -1,0 +1,134 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+version: 2
+
+project_name: meet-sum
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  # macOS — native CGO (must run on macos runner)
+  - id: darwin-arm64
+    main: .
+    binary: meet-sum
+    goos: [darwin]
+    goarch: [arm64]
+    env:
+      - CGO_ENABLED=1
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+
+  - id: darwin-amd64
+    main: .
+    binary: meet-sum
+    goos: [darwin]
+    goarch: [amd64]
+    env:
+      - CGO_ENABLED=1
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+
+  # Linux — cross-compiled with Zig on ubuntu runner
+  - id: linux-amd64
+    main: .
+    binary: meet-sum
+    goos: [linux]
+    goarch: [amd64]
+    env:
+      - CGO_ENABLED=1
+      - CC=zig cc -target x86_64-linux-gnu
+      - CXX=zig c++ -target x86_64-linux-gnu
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+
+  - id: linux-arm64
+    main: .
+    binary: meet-sum
+    goos: [linux]
+    goarch: [arm64]
+    env:
+      - CGO_ENABLED=1
+      - CC=zig cc -target aarch64-linux-gnu
+      - CXX=zig c++ -target aarch64-linux-gnu
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+
+  # Windows — cross-compiled with Zig on ubuntu runner
+  - id: windows-amd64
+    main: .
+    binary: meet-sum
+    goos: [windows]
+    goarch: [amd64]
+    env:
+      - CGO_ENABLED=1
+      - CC=zig cc -target x86_64-windows-gnu
+      - CXX=zig c++ -target x86_64-windows-gnu
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+
+archives:
+  - id: default
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - scripts/transcribe.py
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: Bug Fixes
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Other
+      order: 999
+
+release:
+  draft: false
+  prerelease: auto
+  name_template: "meet-sum v{{.Version}}"
+  header: |
+    ## meet-sum {{.Version}}
+
+    > Record, transcribe, and summarize meetings locally — no cloud, no subscriptions.
+
+    ### Quick Install
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/falkomerr/meet-sum/main/scripts/install.sh | bash
+    ```

@@ -1,0 +1,26 @@
+# Build artifacts
+meet-sum
+meet-sum.exe
+dist/
+
+# Runtime output directories
+video_dist/
+transcribed_dist/
+
+# Development tools
+.beads/
+.claude/
+.omc/
+
+# Go
+*.test
+*.out
+/vendor/
+
+# Temp audio extraction
+/tmp/audio_from_video/
+
+# Editor
+.DS_Store
+*.swp
+*.swo
